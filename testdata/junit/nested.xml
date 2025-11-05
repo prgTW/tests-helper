@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Parent" time="10.0">
+    <testsuite name="Child1" file="pkg/nested/test1.go" time="3.5">
+      <testcase name="Test1" time="1.5"/>
+    </testsuite>
+    <testsuite name="Child2" file="pkg/nested/test2.go" time="6.5">
+      <testcase name="Test2" time="3.0"/>
+    </testsuite>
+  </testsuite>
+</testsuites>

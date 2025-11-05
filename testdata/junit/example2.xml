@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="TestPackage1" file="pkg/service/auth_test.go" time="2.100">
+    <testcase name="TestLogin" time="1.1"/>
+  </testsuite>
+  <testsuite name="TestPackage4" file="pkg/db/connection_test.go" time="12.567">
+    <testcase name="TestConnect" time="5.6"/>
+    <testcase name="TestDisconnect" time="3.2"/>
+  </testsuite>
+</testsuites>

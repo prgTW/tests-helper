@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="TestWithComma" file="pkg/locale/test.go" time="1,234">
+    <testcase name="Test1" time="0,5"/>
+  </testsuite>
+</testsuites>

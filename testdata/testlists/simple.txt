@@ -1,0 +1,4 @@
+pkg/service/auth_test.go
+pkg/service/user_test.go
+pkg/api/handler_test.go
+pkg/db/connection_test.go

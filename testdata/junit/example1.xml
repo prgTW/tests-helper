@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="TestPackage1" file="pkg/service/auth_test.go" time="5.234">
+    <testcase name="TestLogin" time="2.1"/>
+    <testcase name="TestLogout" time="1.5"/>
+  </testsuite>
+  <testsuite name="TestPackage2" file="pkg/service/user_test.go" time="3.456">
+    <testcase name="TestCreateUser" time="1.2"/>
+    <testcase name="TestDeleteUser" time="0.8"/>
+  </testsuite>
+  <testsuite name="TestPackage3" file="pkg/api/handler_test.go" time="8.901">
+    <testcase name="TestGetHandler" time="3.4"/>
+    <testcase name="TestPostHandler" time="2.1"/>
+  </testsuite>
+</testsuites>
