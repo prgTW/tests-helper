@@ -1,0 +1,130 @@
+version: 2
+
+before:
+  hooks:
+    # Ensure dependencies are up to date
+    - go mod tidy
+    # Run tests before building
+    - go test ./...
+
+builds:
+  - id: tests-helper
+    binary: tests-helper
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    # Ensure proper builds
+    mod_timestamp: '{{ .CommitTimestamp }}'
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.Commit}}
+      - -X main.date={{.Date}}
+
+archives:
+  - id: tests-helper
+    format: tar.gz
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- .Version }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - README.md
+      - LICENSE*
+      - CLAUDE.md
+
+checksum:
+  name_template: 'checksums.txt'
+  algorithm: sha256
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: asc
+  use: github
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^chore:'
+      - Merge pull request
+      - Merge branch
+  groups:
+    - title: 'Features'
+      regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
+      order: 0
+    - title: 'Bug Fixes'
+      regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
+      order: 1
+    - title: 'Performance Improvements'
+      regexp: '^.*?perf(\([[:word:]]+\))??!?:.+$'
+      order: 2
+    - title: 'Refactoring'
+      regexp: '^.*?refactor(\([[:word:]]+\))??!?:.+$'
+      order: 3
+    - title: 'Other'
+      order: 999
+
+release:
+  github:
+    owner: prgtw
+    name: tests-helper
+  draft: false
+  prerelease: auto
+  mode: append
+  header: |
+    ## tests-helper {{ .Tag }} ({{ .Date }})
+
+    Welcome to this new release of tests-helper!
+
+# Homebrew tap (optional - uncomment and configure if needed)
+# brews:
+#   - repository:
+#       owner: prgtw
+#       name: homebrew-tap
+#     directory: Formula
+#     homepage: https://github.com/prgtw/tests-helper
+#     description: CLI tool for intelligent test distribution across parallel workers
+#     license: MIT
+#     test: |
+#       system "#{bin}/tests-helper --version"
+#     install: |
+#       bin.install "tests-helper"
+
+# Docker images (optional - uncomment and configure if needed)
+# dockers:
+#   - image_templates:
+#       - "prgtw/tests-helper:{{ .Tag }}-amd64"
+#       - "prgtw/tests-helper:latest-amd64"
+#     use: buildx
+#     dockerfile: Dockerfile
+#     build_flag_templates:
+#       - "--platform=linux/amd64"
+#   - image_templates:
+#       - "prgtw/tests-helper:{{ .Tag }}-arm64"
+#       - "prgtw/tests-helper:latest-arm64"
+#     use: buildx
+#     dockerfile: Dockerfile
+#     build_flag_templates:
+#       - "--platform=linux/arm64"
+
+# Announce releases (optional)
+# announce:
+#   slack:
+#     enabled: true
+#     message_template: 'tests-helper {{ .Tag }} is out! Check it out: {{ .ReleaseURL }}'

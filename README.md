@@ -13,14 +13,47 @@ A CLI tool that intelligently distributes test files across parallel workers bas
 
 ## Installation
 
+### Download Pre-built Binaries
+
+Download the latest release for your platform from the [Releases page](https://github.com/prgtw/tests-helper/releases).
+
+**Linux (amd64):**
 ```bash
-go install github.com/yourusername/tests-helper@latest
+curl -L https://github.com/prgtw/tests-helper/releases/latest/download/tests-helper_VERSION_Linux_amd64.tar.gz | tar xz
+sudo mv tests-helper /usr/local/bin/
 ```
 
-Or build from source:
+**Linux (arm64):**
+```bash
+curl -L https://github.com/prgtw/tests-helper/releases/latest/download/tests-helper_VERSION_Linux_arm64.tar.gz | tar xz
+sudo mv tests-helper /usr/local/bin/
+```
+
+**macOS (amd64):**
+```bash
+curl -L https://github.com/prgtw/tests-helper/releases/latest/download/tests-helper_VERSION_Darwin_amd64.tar.gz | tar xz
+sudo mv tests-helper /usr/local/bin/
+```
+
+**macOS (arm64/M1/M2):**
+```bash
+curl -L https://github.com/prgtw/tests-helper/releases/latest/download/tests-helper_VERSION_Darwin_arm64.tar.gz | tar xz
+sudo mv tests-helper /usr/local/bin/
+```
+
+**Windows (amd64):**
+Download the `.zip` file from the releases page and extract it to your PATH.
+
+### Install via Go
 
 ```bash
-git clone https://github.com/yourusername/tests-helper.git
+go install github.com/prgtw/tests-helper@latest
+```
+
+### Build from Source
+
+```bash
+git clone https://github.com/prgtw/tests-helper.git
 cd tests-helper
 go build -o tests-helper
 ```
@@ -143,7 +176,7 @@ jobs:
       # Install tests-helper
       - run:
           name: Install tests-helper
-          command: go install github.com/yourusername/tests-helper@latest
+          command: go install github.com/prgtw/tests-helper@latest
 
       # Run tests with automatic splitting
       - run:
@@ -170,17 +203,51 @@ workflows:
 - `CIRCLE_NODE_TOTAL`: Total number of parallel containers (automatically set)
 - `CIRCLE_NODE_INDEX`: Current container index, 0-based (automatically set)
 
+## Releases
+
+Releases are automatically created on every push to the `master` branch using [GoReleaser](https://goreleaser.com/). The workflow:
+
+1. **Push to master**: Triggers the GitHub Actions workflow
+2. **Run tests**: Ensures all tests pass before building
+3. **Build binaries**: Compiles for multiple platforms (Linux, macOS, Windows) and architectures (amd64, arm64)
+4. **Create release**: Automatically creates a GitHub release with:
+   - Pre-built binaries for all platforms
+   - SHA256 checksums
+   - Changelog generated from commit messages
+
+### Creating a Tagged Release
+
+For versioned releases, push a tag:
+
+```bash
+git tag -a v1.0.0 -m "Release v1.0.0"
+git push origin v1.0.0
+```
+
+This will create a formal release instead of a snapshot build.
+
 ## Development
 
 ### Prerequisites
 
 - Go 1.21 or higher
 - golangci-lint (for linting)
+- goreleaser (optional, for local release testing)
 
 ### Building
 
 ```bash
 go build -o tests-helper
+```
+
+### Testing GoReleaser Locally
+
+```bash
+# Test the release process without publishing
+goreleaser release --snapshot --clean
+
+# Check what would be released
+goreleaser check
 ```
 
 ### Testing
