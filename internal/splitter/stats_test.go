@@ -7,8 +7,8 @@ import (
 
 	"github.com/rs/zerolog"
 
-	"github.com/tomaszwojcik/tests-helper/internal/splitter"
-	"github.com/tomaszwojcik/tests-helper/internal/worker"
+	"github.com/prgtw/tests-helper/internal/splitter"
+	"github.com/prgtw/tests-helper/internal/worker"
 )
 
 func TestPercentileCalculator_Calculate(t *testing.T) {

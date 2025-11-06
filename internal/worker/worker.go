@@ -3,7 +3,7 @@ package worker
 import (
 	"math"
 
-	"github.com/tomaszwojcik/tests-helper/internal/junit"
+	"github.com/prgtw/tests-helper/internal/junit"
 )
 
 // Worker represents a worker with assigned tests.

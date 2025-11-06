@@ -7,7 +7,7 @@ import (
 
 	"github.com/rs/zerolog"
 
-	"github.com/tomaszwojcik/tests-helper/internal/splitter"
+	"github.com/prgtw/tests-helper/internal/splitter"
 )
 
 func TestSplitter_ReadTests(t *testing.T) {
@@ -88,7 +88,7 @@ func TestSplitter_ReadTests(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Failed to open fixture: %v", err)
 		}
-		defer file.Close()
+		defer func(file *os.File) { _ = file.Close() }(file)
 
 		tests, err := s.ReadTests(file, map[string]float64{})
 		if err != nil {
@@ -105,7 +105,7 @@ func TestSplitter_ReadTests(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Failed to open fixture: %v", err)
 		}
-		defer file.Close()
+		defer func(file *os.File) { _ = file.Close() }(file)
 
 		tests, err := s.ReadTests(file, map[string]float64{})
 		if err != nil {
@@ -236,7 +236,7 @@ func TestSplitter_Integration(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to open fixture: %v", err)
 	}
-	defer inputFile.Close()
+	defer func(file *os.File) { _ = file.Close() }(inputFile)
 
 	// Use times from JUnit fixture
 	times := map[string]float64{

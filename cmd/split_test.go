@@ -8,7 +8,7 @@ import (
 
 	"github.com/rs/zerolog"
 
-	"github.com/tomaszwojcik/tests-helper/cmd"
+	"github.com/prgtw/tests-helper/cmd"
 )
 
 func TestSplitCommand_Integration(t *testing.T) {

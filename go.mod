@@ -1,4 +1,4 @@
-module github.com/tomaszwojcik/tests-helper
+module github.com/prgtw/tests-helper
 
 go 1.25.3
 

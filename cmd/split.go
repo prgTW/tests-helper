@@ -8,9 +8,9 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 
-	"github.com/tomaszwojcik/tests-helper/internal/config"
-	"github.com/tomaszwojcik/tests-helper/internal/junit"
-	"github.com/tomaszwojcik/tests-helper/internal/splitter"
+	"github.com/prgtw/tests-helper/internal/config"
+	"github.com/prgtw/tests-helper/internal/junit"
+	"github.com/prgtw/tests-helper/internal/splitter"
 )
 
 type splitOptions struct {
@@ -124,7 +124,7 @@ func runSplit(logger zerolog.Logger, opts *splitOptions, stdin io.Reader, stdout
 	}
 
 	for _, test := range worker.Tests {
-		fmt.Fprintln(stdout, test.Name)
+		_, _ = fmt.Fprintln(stdout, test.Name)
 	}
 
 	logger.Info().

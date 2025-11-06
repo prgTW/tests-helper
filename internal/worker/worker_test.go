@@ -3,8 +3,8 @@ package worker_test
 import (
 	"testing"
 
-	"github.com/tomaszwojcik/tests-helper/internal/junit"
-	"github.com/tomaszwojcik/tests-helper/internal/worker"
+	"github.com/prgtw/tests-helper/internal/junit"
+	"github.com/prgtw/tests-helper/internal/worker"
 )
 
 func TestAllocator_Distribute(t *testing.T) {

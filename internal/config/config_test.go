@@ -3,7 +3,7 @@ package config_test
 import (
 	"testing"
 
-	"github.com/tomaszwojcik/tests-helper/internal/config"
+	"github.com/prgtw/tests-helper/internal/config"
 )
 
 func TestLoad(t *testing.T) {

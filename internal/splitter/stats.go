@@ -6,7 +6,7 @@ import (
 
 	"github.com/rs/zerolog"
 
-	"github.com/tomaszwojcik/tests-helper/internal/worker"
+	"github.com/prgtw/tests-helper/internal/worker"
 )
 
 // StatsReporter handles printing of distribution statistics.
