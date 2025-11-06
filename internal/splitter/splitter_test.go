@@ -10,6 +10,7 @@ import (
 	"github.com/prgtw/tests-helper/internal/splitter"
 )
 
+//nolint:gocognit // Don't care
 func TestSplitter_ReadTests(t *testing.T) {
 	logger := zerolog.New(os.Stderr).Level(zerolog.Disabled)
 	s := splitter.NewSplitter(logger)

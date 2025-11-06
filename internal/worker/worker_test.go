@@ -117,6 +117,7 @@ func TestAllocator_GetWorker(t *testing.T) {
 	})
 }
 
+//nolint:gocognit // Don't care
 func TestAllocator_GetStats(t *testing.T) {
 	tests := []junit.Test{
 		{Name: "test1", Time: 10.0},

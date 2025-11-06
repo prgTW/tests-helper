@@ -11,8 +11,8 @@ import (
 
 var (
 	version = "snapshot"
-	commit  = "<commit-unknown>"
-	date    = time.Now().Format(time.RFC3339)
+	commit  = "<commit-unknown>"              //nolint:gochecknoglobals // replaced by GoReleaser
+	date    = time.Now().Format(time.RFC3339) //nolint:gochecknoglobals // replaced by GoReleaser
 )
 
 // newRootCmd creates the root command.

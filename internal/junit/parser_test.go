@@ -10,6 +10,7 @@ import (
 	"github.com/prgtw/tests-helper/internal/junit"
 )
 
+//nolint:gocognit // Don't care
 func TestParser_LoadFiles(t *testing.T) {
 	logger := zerolog.New(os.Stderr).Level(zerolog.Disabled)
 	parser := junit.NewParser(logger)
@@ -33,7 +34,7 @@ func TestParser_LoadFiles(t *testing.T) {
 				t.Errorf("File %q not found in times", file)
 				continue
 			}
-			if !floatEqual(gotTime, expectedTime, 0.001) {
+			if !floatEqual(gotTime, expectedTime) {
 				t.Errorf("File %q: got time=%.3f, want %.3f", file, gotTime, expectedTime)
 			}
 		}
@@ -54,13 +55,13 @@ func TestParser_LoadFiles(t *testing.T) {
 		// Should accumulate to 7.334s
 		authTime := times["pkg/service/auth_test.go"]
 		expected := 7.334
-		if !floatEqual(authTime, expected, 0.001) {
+		if !floatEqual(authTime, expected) {
 			t.Errorf("auth_test.go: got %.3f, want %.3f (accumulated)", authTime, expected)
 		}
 
 		// example2.xml has connection_test.go
 		connTime := times["pkg/db/connection_test.go"]
-		if !floatEqual(connTime, 12.567, 0.001) {
+		if !floatEqual(connTime, 12.567) {
 			t.Errorf("connection_test.go: got %.3f, want 12.567", connTime)
 		}
 	})
@@ -103,7 +104,7 @@ func TestParser_LoadFiles(t *testing.T) {
 				t.Errorf("File %q not found in times", file)
 				continue
 			}
-			if !floatEqual(gotTime, expectedTime, 0.001) {
+			if !floatEqual(gotTime, expectedTime) {
 				t.Errorf("File %q: got time=%.3f, want %.3f", file, gotTime, expectedTime)
 			}
 		}
@@ -118,7 +119,7 @@ func TestParser_LoadFiles(t *testing.T) {
 
 		time := times["pkg/locale/test.go"]
 		expected := 1.234
-		if !floatEqual(time, expected, 0.001) {
+		if !floatEqual(time, expected) {
 			t.Errorf("comma-decimal parsing: got %.3f, want %.3f", time, expected)
 		}
 	})
@@ -172,10 +173,10 @@ func TestParser_EmptyInput(t *testing.T) {
 }
 
 // floatEqual checks if two floats are equal within tolerance.
-func floatEqual(a, b, tolerance float64) bool {
+func floatEqual(a, b float64) bool {
 	diff := a - b
 	if diff < 0 {
 		diff = -diff
 	}
-	return diff <= tolerance
+	return diff <= 0.001
 }
