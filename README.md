@@ -1,5 +1,7 @@
 # tests-helper
 
+[![Release](https://github.com/prgTW/tests-helper/actions/workflows/release.yml/badge.svg)](https://github.com/prgTW/tests-helper/actions/workflows/release.yml)
+
 A CLI tool that intelligently distributes test files across parallel workers based on historical execution times from JUnit XML reports. Optimizes parallel test execution in CI/CD environments using a greedy bin-packing algorithm.
 
 ## Features
