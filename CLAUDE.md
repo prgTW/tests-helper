@@ -258,7 +258,27 @@ All test fixtures are located in `testdata/`:
 - **Real-world scenarios**: Using actual JUnit timing data
 - **Error handling**: Invalid XML, missing files, empty input
 
-## CircleCI Integration
+## CI/CD Integration
+
+### GitHub Actions
+
+The project uses GitHub Actions for automated testing and releases:
+
+**Tests Workflow** (`.github/workflows/tests.yml`):
+- Triggers on all pull requests to master
+- Reusable workflow that can be called by other workflows
+- Runs two jobs in parallel:
+  - **test**: Executes full test suite with coverage reporting
+  - **lint**: Runs golangci-lint with 50+ linters
+
+**Release Workflow** (`.github/workflows/release.yml`):
+- Triggers on pushes to master and version tags
+- Calls the Tests workflow as a nested workflow
+- Only proceeds with release if tests pass
+- Uses GoReleaser to build binaries for multiple platforms
+- Creates GitHub releases with binaries and checksums
+
+### CircleCI Integration
 
 The tool is designed for CircleCI's parallel test execution:
 - `CIRCLE_NODE_TOTAL`: Total number of parallel containers

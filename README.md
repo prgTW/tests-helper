@@ -203,12 +203,22 @@ workflows:
 - `CIRCLE_NODE_TOTAL`: Total number of parallel containers (automatically set)
 - `CIRCLE_NODE_INDEX`: Current container index, 0-based (automatically set)
 
-## Releases
+## CI/CD
+
+### Pull Request Checks
+
+Every pull request automatically runs:
+- **Tests**: Full test suite with coverage reporting
+- **Linting**: golangci-lint with 50+ linters to ensure code quality
+
+The Tests workflow (`.github/workflows/tests.yml`) runs on all PRs to ensure code quality before merging.
+
+### Releases
 
 Releases are automatically created on every push to the `master` branch using [GoReleaser](https://goreleaser.com/). The workflow:
 
 1. **Push to master**: Triggers the GitHub Actions workflow
-2. **Run tests**: Ensures all tests pass before building
+2. **Run tests**: Executes the reusable Tests workflow (tests + linting)
 3. **Build binaries**: Compiles for multiple platforms (Linux, macOS, Windows) and architectures (amd64, arm64)
 4. **Create release**: Automatically creates a GitHub release with:
    - Pre-built binaries for all platforms
@@ -303,10 +313,12 @@ Current test coverage:
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Make your changes
-4. Run tests and linter (`go test ./...` and `golangci-lint run --fix`)
+4. Run tests and linter locally (`go test ./...` and `golangci-lint run --fix`)
 5. Commit your changes (`git commit -m 'Add amazing feature'`)
 6. Push to the branch (`git push origin feature/amazing-feature`)
 7. Open a Pull Request
+
+**Note**: Pull requests automatically run the full test suite and linting checks via GitHub Actions. Ensure your code passes locally before pushing to save CI time.
 
 ## License
 
