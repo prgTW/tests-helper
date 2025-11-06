@@ -36,6 +36,11 @@ go.work.sum
 .DS_Store
 Thumbs.db
 
+# Build artifacts
+dist/
+build/
+bin/
+
 # Environment files
 .env
 .env.local
