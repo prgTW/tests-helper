@@ -31,7 +31,8 @@ builds:
 
 archives:
   - id: tests-helper
-    formats: [ 'tar.gz' ]
+    formats:
+      - tar.gz
     name_template: >-
       {{ .ProjectName }}_
       {{- .Version }}_
@@ -41,7 +42,8 @@ archives:
       {{- if .Arm }}v{{ .Arm }}{{ end }}
     format_overrides:
       - goos: windows
-        formats: [ 'zip' ]
+        formats:
+          - zip
     files:
       - README.md
       - LICENSE*
@@ -81,12 +83,10 @@ changelog:
       order: 999
 
 release:
-  github:
-    owner: prgtw
-    name: tests-helper
   draft: false
   prerelease: auto
   mode: append
+  make_latest: true
   header: |
     ## tests-helper {{ .Tag }} ({{ .Date }})
 
