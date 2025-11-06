@@ -79,10 +79,6 @@ release:
   prerelease: auto
   mode: append
   make_latest: true
-  header: |
-    ## tests-helper {{ .Tag }} ({{ .Date }})
-
-    Welcome to this new release of tests-helper!
 
 # Homebrew tap (optional - uncomment and configure if needed)
 # brews:
