@@ -9,10 +9,11 @@ This document provides context for AI agents working with the tests-helper codeb
 ## Architecture
 
 ### Technology Stack
-- **Language**: Go 1.x
+
+- **Language**: Go 1.25.x
 - **CLI Framework**: spf13/cobra (command-line interface)
-- **Logging**: rs/zerolog (structured JSON logging)
-- **Configuration**: caarlos0/env (environment variable parsing)
+- **Logging**: rs/zerolog (console writer to stderr)
+- **Configuration**: caarlos0/env v11 (environment variable parsing)
 
 ### Directory Structure
 
@@ -30,7 +31,7 @@ tests-helper/
 │   │   └── parser.go         # JUnit XML parsing logic
 │   ├── splitter/
 │   │   ├── splitter.go       # Test splitting orchestration
-│   │   └── stats.go          # Statistics and percentile calculation
+│   │   └── stats.go          # Distribution stats + percentiles
 │   └── worker/
 │       └── worker.go         # Worker allocation and distribution
 ├── old.go                    # Original implementation (reference)
@@ -41,45 +42,54 @@ tests-helper/
 ## Core Concepts
 
 ### 1. Test Distribution Algorithm
+
 - **Algorithm**: Greedy bin packing
 - **Strategy**: Always assign the next test to the worker with the minimum total time
 - **Input**: List of tests sorted by execution time (descending)
 - **Output**: Balanced distribution across N workers
 
 ### 2. Historical Time Data
+
 - **Source**: JUnit XML reports from previous test runs
 - **Format**: `<testsuite file="test/path.go" time="12.345">`
-- **Fallback**: Tests without historical data get a default time of 1.0 seconds
+- **Parsing**: Glob patterns expanded; times accumulated across files and nested suites
+- **Fallback**: Tests without historical data get a default time of 1.0 seconds and log a warning
 
 ### 3. Worker Assignment
+
 - Workers are identified by index (0 to N-1)
 - The tool outputs only the tests assigned to the specified worker index
 - Statistics are printed to stderr, test list to stdout
+- Worker index/total are resolved from flags first, then env, then defaults (index 0, total 1)
 
 ## Key Components
 
 ### Configuration (`internal/config`)
+
 - Parses `CIRCLE_NODE_INDEX` and `CIRCLE_NODE_TOTAL` environment variables for compatibility with CircleCI
 - Supports CLI flag overrides
 - Used for test splitting
 
 ### JUnit Parser (`internal/junit`)
+
 - Parses JUnit XML files with nested `<testsuite>` elements
 - Supports glob patterns for multiple input files
 - Accumulates test times across multiple reports
 - Handles locale-specific decimal separators (comma vs dot)
 
 ### Worker Allocator (`internal/worker`)
+
 - Implements greedy distribution algorithm
 - Calculates distribution statistics (min, max, avg, percentiles)
 - Maintains worker load balance
 
 ### Splitter (`internal/splitter`)
+
 - Orchestrates the splitting workflow
 - Reads test names from stdin
 - Sorts tests by execution time
 - Coordinates worker allocation
-- Generates statistics reports
+- Generates statistics reports (summary + percentiles)
 
 ## Usage Examples
 
@@ -103,15 +113,20 @@ tests-helper split --help
 ## Input/Output
 
 ### Input
+
 - **stdin**: Newline-separated list of test file paths
-- **--stats flag**: Glob pattern(s) for JUnit XML files
+- **--stats flag**: Glob pattern(s) for JUnit XML files (repeatable)
+- **stdin requirement**: If stdin is a terminal, the command returns an error prompting to pipe a test list
 
 ### Output
+
 - **stdout**: Test files assigned to the selected worker (one per line)
-- **stderr**: Structured logs and statistics summary
+- **stderr**: Console-formatted structured logs and statistics summary
 
 ### Statistics Output (stderr - structured logging)
+
 All statistics are logged using zerolog with structured fields:
+
 ```
 7:10PM INF Starting test split index=0 total=4
 7:10PM INF No stats files provided, using default test times
@@ -139,16 +154,19 @@ All log messages include structured fields for easy parsing and analysis.
 ## Common Development Tasks
 
 ### Building
+
 ```bash
 go build -o tests-helper
 ```
 
 ### Running Tests
+
 ```bash
 go test ./...
 ```
 
 ### Linting
+
 The project uses [golangci-lint](https://golangci-lint.run/) with a strict configuration (`.golangci.yaml`).
 
 ```bash
@@ -159,24 +177,20 @@ golangci-lint run
 golangci-lint run --fix
 ```
 
-The configuration includes 50+ linters and enforces:
-- No global variables or `init()` functions
-- Proper error handling and wrapping
-- Structured logging best practices
-- Code complexity limits
-- Consistent code formatting
-- Security checks (gosec)
-- Performance optimizations
+The configuration includes a broad set of linters enforcing error handling,
+code quality, formatting, and security checks.
 
 **Always run `golangci-lint run --fix` before committing code.**
 
 ### Adding a New Command
+
 1. Create new file in `cmd/` directory
 2. Define cobra command with `cobra.Command{}`
 3. Register with `rootCmd.AddCommand()` in `init()`
 4. Implement `RunE` function with business logic
 
 ### Adding New Features
+
 - **New stat calculation**: Extend `internal/splitter/stats.go`
 - **New input format**: Add parser in `internal/junit/`
 - **New distribution algorithm**: Modify `internal/worker/worker.go`
@@ -188,10 +202,12 @@ The configuration includes 50+ linters and enforces:
 - Return errors up to the command level
 - Cobra automatically prints errors and exits with status 1
 - Log warnings for non-fatal issues (missing stats files, unparseable XML)
+- The split command errors on empty input or when stdin is not piped
 
 ## Logging
 
-The application uses zerolog for structured JSON logging with console output. All logs are written to stderr, while test file names are written to stdout.
+The application uses zerolog with the ConsoleWriter for human-readable logs.
+All logs are written to stderr, while test file names are written to stdout.
 
 - **Debug**: Detailed trace information (per-test assignments, parsing details)
 - **Info**: Key operations (files loaded, distribution stats, worker assignments)
@@ -201,6 +217,7 @@ The application uses zerolog for structured JSON logging with console output. Al
 Enable debug logging with `--debug` flag.
 
 ### Structured Fields
+
 - Distribution stats: `total_time`, `avg_per_bucket`, `worker`, `test_count`, `min_time`, `max_time`
 - Worker assignment: `tests_assigned`, `total_time`, `worker`
 - Parsing: `count`, `file`, `pattern`
@@ -210,13 +227,18 @@ All log messages include relevant structured fields for easy parsing, filtering,
 ## Testing Strategy
 
 ### Test Coverage
-Current test coverage (as of latest run):
-- `internal/config`: **100.0%** - Full coverage of configuration management
-- `internal/worker`: **96.6%** - Core test distribution algorithm
-- `internal/junit`: **91.2%** - JUnit XML parsing
-- `internal/splitter`: **88.0%** - Test splitting orchestration
+
+Latest coverage (from `go test ./... -coverprofile=coverage.out`):
+- **total**: 65.3%
+- `github.com/prgtw/tests-helper`: 0.0%
+- `github.com/prgtw/tests-helper/cmd`: 0.0%
+- `internal/config`: 100.0%
+- `internal/junit`: 91.2%
+- `internal/splitter`: 88.0%
+- `internal/worker`: 96.6%
 
 ### Running Tests
+
 ```bash
 # Run all tests
 go test ./...
@@ -238,21 +260,25 @@ go tool cover -html=coverage.out
 ### Test Structure
 
 **Unit Tests**:
+
 - `internal/junit/parser_test.go`: XML parsing with various formats, nested suites, locale handling
 - `internal/worker/worker_test.go`: Distribution algorithm, edge cases, balanced distribution
 - `internal/splitter/splitter_test.go`: Test reading, sorting, complete splitting workflow
 - `internal/config/config_test.go`: Environment variable parsing, priority handling
 
 **Integration Tests**:
+
 - `internal/splitter/splitter_test.go::TestSplitter_Integration`: End-to-end with fixture files
 - `cmd/split_test.go`: Command structure validation (E2E tests marked as skipped)
 
 ### Test Fixtures
+
 All test fixtures are located in `testdata/`:
 - `testdata/junit/*.xml`: Sample JUnit XML files (nested, comma decimals, multiple files)
 - `testdata/testlists/*.txt`: Sample test file lists
 
 ### Test Data Patterns
+
 - **Simple cases**: Basic distribution across 2-4 workers
 - **Edge cases**: Empty tests, more workers than tests, single test
 - **Real-world scenarios**: Using actual JUnit timing data
@@ -265,26 +291,27 @@ All test fixtures are located in `testdata/`:
 The project uses GitHub Actions for automated testing and releases:
 
 **Tests Workflow** (`.github/workflows/tests.yml`):
-- Triggers on all pull requests to master
-- Reusable workflow that can be called by other workflows
-- Runs two jobs in parallel:
-  - **test**: Executes full test suite with coverage reporting
-  - **lint**: Runs golangci-lint with 50+ linters
+
+- Triggers on pull requests to master and can be reused via `workflow_call`
+- Runs two jobs:
+  - **test**: Executes tests, generates coverage report, prints coverage summary
+  - **lint**: Runs golangci-lint via GitHub Action
 
 **Release Workflow** (`.github/workflows/release.yml`):
+
 - Triggers on pushes to master and version tags
-- Calls the Tests workflow as a nested workflow
-- Only proceeds with release if tests pass
-- Uses GoReleaser to build binaries for multiple platforms
-- Creates GitHub releases with binaries and checksums
+- Calls the Tests workflow first
+- Runs GoReleaser for snapshot releases on master and full releases on tags
 
 ### CircleCI Integration
 
 The tool is designed for CircleCI's parallel test execution:
+
 - `CIRCLE_NODE_TOTAL`: Total number of parallel containers
 - `CIRCLE_NODE_INDEX`: Current container index (0-based)
 
 Example CircleCI config:
+
 ```yaml
 jobs:
   test:
@@ -299,6 +326,7 @@ jobs:
 ## Future Enhancements
 
 Potential areas for expansion:
+
 - Support for other test report formats (TAP, Subunit)
 - Visualization of distribution balance
 - Machine learning-based time prediction
@@ -308,17 +336,17 @@ Potential areas for expansion:
 ## Dependencies
 
 - `github.com/spf13/cobra`: CLI framework
-- `github.com/rs/zerolog`: Structured logging
+- `github.com/rs/zerolog`: Logging
 - `github.com/caarlos0/env/v11`: Environment variable parsing
 - Standard library: `encoding/xml`, `bufio`, `sort`, etc.
 
-## Version
+## Versioning
 
-Current version: 1.0.0
+Version info is injected at build time (GoReleaser). Defaults are
+`snapshot`, `<commit-unknown>`, and a build date when not set.
 
 ## References
 
-- Original implementation: `old.go`
 - Cobra docs: https://github.com/spf13/cobra
 - Zerolog docs: https://github.com/rs/zerolog
 - CircleCI parallel docs: https://circleci.com/docs/parallelism-faster-jobs/
