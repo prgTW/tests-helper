@@ -48,3 +48,6 @@ bin/
 
 # Log files
 *.log
+
+# Go cache
+.gocache/
