@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -85,6 +86,10 @@ func runSplit(logger zerolog.Logger, opts *splitOptions, stdin io.Reader, stdout
 		Int("total", total).
 		Msg("Starting test split")
 
+	if isTerminalInput(stdin) {
+		return errors.New("no stdin provided: pipe a test list into stdin (one path per line)")
+	}
+
 	// Parse JUnit XML files
 	var times map[string]float64
 	if len(opts.statsFiles) > 0 {
@@ -133,4 +138,18 @@ func runSplit(logger zerolog.Logger, opts *splitOptions, stdin io.Reader, stdout
 		Msg("Split completed successfully")
 
 	return nil
+}
+
+func isTerminalInput(r io.Reader) bool {
+	file, ok := r.(*os.File)
+	if !ok {
+		return false
+	}
+
+	info, err := file.Stat()
+	if err != nil {
+		return false
+	}
+
+	return info.Mode()&os.ModeCharDevice != 0
 }
