@@ -42,7 +42,7 @@ func (s *Splitter) ReadTests(r io.Reader, times map[string]float64) ([]junit.Tes
 		time := times[name]
 		if time == 0 {
 			time = DefaultTestTime
-			s.logger.Debug().
+			s.logger.Warn().
 				Str("test", name).
 				Float64("time", time).
 				Msg("No historical data, using default time")
