@@ -229,11 +229,12 @@ All log messages include relevant structured fields for easy parsing, filtering,
 ### Test Coverage
 
 Latest coverage (from `go test ./... -coverprofile=coverage.out`):
-- **total**: 65.3%
+
+- **total**: 66.1%
 - `github.com/prgtw/tests-helper`: 0.0%
 - `github.com/prgtw/tests-helper/cmd`: 0.0%
 - `internal/config`: 100.0%
-- `internal/junit`: 91.2%
+- `internal/junit`: 92.3%
 - `internal/splitter`: 88.0%
 - `internal/worker`: 96.6%
 
@@ -274,6 +275,7 @@ go tool cover -html=coverage.out
 ### Test Fixtures
 
 All test fixtures are located in `testdata/`:
+
 - `testdata/junit/*.xml`: Sample JUnit XML files (nested, comma decimals, multiple files)
 - `testdata/testlists/*.txt`: Sample test file lists
 

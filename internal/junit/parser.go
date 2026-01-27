@@ -84,16 +84,26 @@ func (p *Parser) loadFile(path string, times map[string]float64) error {
 // accumulateTimes recursively accumulates test times from test suites.
 func (p *Parser) accumulateTimes(suites []TestSuite, times map[string]float64, count *int) {
 	for _, suite := range suites {
-		if suite.File != "" && suite.Time != "" {
+		if suite.Time != "" {
 			// Normalize time string (replace comma with dot for some locales)
 			timeStr := strings.ReplaceAll(suite.Time, ",", ".")
 			if val, err := strconv.ParseFloat(timeStr, 64); err == nil {
-				times[suite.File] += val
-				p.logger.Debug().
-					Str("file", suite.File).
-					Float64("time", val).
-					Msg("Accumulated test time")
-				*count++
+				if suite.File != "" {
+					times[suite.File] += val
+					p.logger.Debug().
+						Str("file", suite.File).
+						Float64("time", val).
+						Msg("Accumulated test time")
+					*count++
+				}
+				if suite.Name != "" && suite.Name != suite.File {
+					times[suite.Name] += val
+					p.logger.Debug().
+						Str("name", suite.Name).
+						Float64("time", val).
+						Msg("Accumulated test time")
+					*count++
+				}
 			}
 		}
 		// Recursively process nested test suites

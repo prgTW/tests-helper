@@ -2,11 +2,13 @@ package splitter_test
 
 import (
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/rs/zerolog"
 
+	"github.com/prgtw/tests-helper/internal/junit"
 	"github.com/prgtw/tests-helper/internal/splitter"
 )
 
@@ -271,6 +273,100 @@ func TestSplitter_Integration(t *testing.T) {
 	})
 }
 
+func TestSplitter_ReadTests_MatchesJUnitSuiteAttributes(t *testing.T) {
+	logger := zerolog.New(os.Stderr).Level(zerolog.Disabled)
+	s := splitter.NewSplitter(logger)
+
+	t.Run("only file attribute", func(t *testing.T) {
+		times := loadTimesFromXML(t, `<testsuites><testsuite file="pkg/only-file.go" time="2.5"/></testsuites>`)
+
+		tests, err := s.ReadTests(strings.NewReader("pkg/only-file.go\n"), times)
+		if err != nil {
+			t.Fatalf("ReadTests failed: %v", err)
+		}
+
+		if len(tests) != 1 {
+			t.Fatalf("Expected 1 test, got %d", len(tests))
+		}
+		if tests[0].Time != 2.5 {
+			t.Errorf("Expected time 2.5, got %.1f", tests[0].Time)
+		}
+	})
+
+	t.Run("only name attribute", func(t *testing.T) {
+		times := loadTimesFromXML(t, `<testsuites><testsuite name="pkg/only-name.go" time="3.5"/></testsuites>`)
+
+		tests, err := s.ReadTests(strings.NewReader("pkg/only-name.go\n"), times)
+		if err != nil {
+			t.Fatalf("ReadTests failed: %v", err)
+		}
+
+		if len(tests) != 1 {
+			t.Fatalf("Expected 1 test, got %d", len(tests))
+		}
+		if tests[0].Time != 3.5 {
+			t.Errorf("Expected time 3.5, got %.1f", tests[0].Time)
+		}
+	})
+
+	t.Run("both attributes where only name matches", func(t *testing.T) {
+		times := loadTimesFromXML(t, `<testsuites><testsuite name="pkg/name-match.go" file="pkg/file-other.go" time="4.25"/></testsuites>`)
+
+		tests, err := s.ReadTests(strings.NewReader("pkg/name-match.go\n"), times)
+		if err != nil {
+			t.Fatalf("ReadTests failed: %v", err)
+		}
+
+		if len(tests) != 1 {
+			t.Fatalf("Expected 1 test, got %d", len(tests))
+		}
+		if tests[0].Time != 4.25 {
+			t.Errorf("Expected time 4.25, got %.2f", tests[0].Time)
+		}
+		if _, exists := times["pkg/file-other.go"]; !exists {
+			t.Error("Expected file attribute time to be recorded")
+		}
+	})
+
+	t.Run("both attributes where only file matches", func(t *testing.T) {
+		times := loadTimesFromXML(t, `<testsuites><testsuite name="pkg/name-other.go" file="pkg/file-match.go" time="5.25"/></testsuites>`)
+
+		tests, err := s.ReadTests(strings.NewReader("pkg/file-match.go\n"), times)
+		if err != nil {
+			t.Fatalf("ReadTests failed: %v", err)
+		}
+
+		if len(tests) != 1 {
+			t.Fatalf("Expected 1 test, got %d", len(tests))
+		}
+		if tests[0].Time != 5.25 {
+			t.Errorf("Expected time 5.25, got %.2f", tests[0].Time)
+		}
+		if _, exists := times["pkg/name-other.go"]; !exists {
+			t.Error("Expected name attribute time to be recorded")
+		}
+	})
+
+	t.Run("both attributes where both attributes match", func(t *testing.T) {
+		times := loadTimesFromXML(t, `<testsuites><testsuite name="pkg/both-match.go" file="pkg/both-match.go" time="6.5"/></testsuites>`)
+
+		tests, err := s.ReadTests(strings.NewReader("pkg/both-match.go\n"), times)
+		if err != nil {
+			t.Fatalf("ReadTests failed: %v", err)
+		}
+
+		if len(tests) != 1 {
+			t.Fatalf("Expected 1 test, got %d", len(tests))
+		}
+		if tests[0].Time != 6.5 {
+			t.Errorf("Expected time 6.5, got %.1f", tests[0].Time)
+		}
+		if len(times) != 1 {
+			t.Errorf("Expected single time entry, got %d", len(times))
+		}
+	})
+}
+
 // floatEqual checks if two floats are equal within tolerance.
 func floatEqual(a, b, tolerance float64) bool {
 	diff := a - b
@@ -278,4 +374,24 @@ func floatEqual(a, b, tolerance float64) bool {
 		diff = -diff
 	}
 	return diff <= tolerance
+}
+
+func loadTimesFromXML(t *testing.T, xmlContent string) map[string]float64 {
+	t.Helper()
+
+	logger := zerolog.New(os.Stderr).Level(zerolog.Disabled)
+	parser := junit.NewParser(logger)
+
+	tmpDir := t.TempDir()
+	xmlPath := filepath.Join(tmpDir, "report.xml")
+	if err := os.WriteFile(xmlPath, []byte(xmlContent), 0o600); err != nil {
+		t.Fatalf("Failed to write XML fixture: %v", err)
+	}
+
+	times, err := parser.LoadFiles([]string{xmlPath})
+	if err != nil {
+		t.Fatalf("LoadFiles failed: %v", err)
+	}
+
+	return times
 }
