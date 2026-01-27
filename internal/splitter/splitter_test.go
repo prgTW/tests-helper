@@ -277,94 +277,49 @@ func TestSplitter_ReadTests_MatchesJUnitSuiteAttributes(t *testing.T) {
 	logger := zerolog.New(os.Stderr).Level(zerolog.Disabled)
 	s := splitter.NewSplitter(logger)
 
-	t.Run("only file attribute", func(t *testing.T) {
-		times := loadTimesFromXML(t, `<testsuites><testsuite file="pkg/only-file.go" time="2.5"/></testsuites>`)
+	cases := []readTestsMatchCase{
+		{
+			name:             "only file attribute",
+			xml:              `<testsuites><testsuite file="pkg/only-file.go" time="2.5"/></testsuites>`,
+			input:            "pkg/only-file.go\n",
+			expectedTime:     2.5,
+			expectedTimesLen: 1,
+		},
+		{
+			name:             "only name attribute",
+			xml:              `<testsuites><testsuite name="pkg/only-name.go" time="3.5"/></testsuites>`,
+			input:            "pkg/only-name.go\n",
+			expectedTime:     3.5,
+			expectedTimesLen: 1,
+		},
+		{
+			name:                "both attributes where only name matches",
+			xml:                 `<testsuites><testsuite name="pkg/name-match.go" file="pkg/file-other.go" time="4.25"/></testsuites>`,
+			input:               "pkg/name-match.go\n",
+			expectedTime:        4.25,
+			expectedKeysPresent: []string{"pkg/file-other.go"},
+		},
+		{
+			name:                "both attributes where only file matches",
+			xml:                 `<testsuites><testsuite name="pkg/name-other.go" file="pkg/file-match.go" time="5.25"/></testsuites>`,
+			input:               "pkg/file-match.go\n",
+			expectedTime:        5.25,
+			expectedKeysPresent: []string{"pkg/name-other.go"},
+		},
+		{
+			name:             "both attributes where both attributes match",
+			xml:              `<testsuites><testsuite name="pkg/both-match.go" file="pkg/both-match.go" time="6.5"/></testsuites>`,
+			input:            "pkg/both-match.go\n",
+			expectedTime:     6.5,
+			expectedTimesLen: 1,
+		},
+	}
 
-		tests, err := s.ReadTests(strings.NewReader("pkg/only-file.go\n"), times)
-		if err != nil {
-			t.Fatalf("ReadTests failed: %v", err)
-		}
-
-		if len(tests) != 1 {
-			t.Fatalf("Expected 1 test, got %d", len(tests))
-		}
-		if tests[0].Time != 2.5 {
-			t.Errorf("Expected time 2.5, got %.1f", tests[0].Time)
-		}
-	})
-
-	t.Run("only name attribute", func(t *testing.T) {
-		times := loadTimesFromXML(t, `<testsuites><testsuite name="pkg/only-name.go" time="3.5"/></testsuites>`)
-
-		tests, err := s.ReadTests(strings.NewReader("pkg/only-name.go\n"), times)
-		if err != nil {
-			t.Fatalf("ReadTests failed: %v", err)
-		}
-
-		if len(tests) != 1 {
-			t.Fatalf("Expected 1 test, got %d", len(tests))
-		}
-		if tests[0].Time != 3.5 {
-			t.Errorf("Expected time 3.5, got %.1f", tests[0].Time)
-		}
-	})
-
-	t.Run("both attributes where only name matches", func(t *testing.T) {
-		times := loadTimesFromXML(t, `<testsuites><testsuite name="pkg/name-match.go" file="pkg/file-other.go" time="4.25"/></testsuites>`)
-
-		tests, err := s.ReadTests(strings.NewReader("pkg/name-match.go\n"), times)
-		if err != nil {
-			t.Fatalf("ReadTests failed: %v", err)
-		}
-
-		if len(tests) != 1 {
-			t.Fatalf("Expected 1 test, got %d", len(tests))
-		}
-		if tests[0].Time != 4.25 {
-			t.Errorf("Expected time 4.25, got %.2f", tests[0].Time)
-		}
-		if _, exists := times["pkg/file-other.go"]; !exists {
-			t.Error("Expected file attribute time to be recorded")
-		}
-	})
-
-	t.Run("both attributes where only file matches", func(t *testing.T) {
-		times := loadTimesFromXML(t, `<testsuites><testsuite name="pkg/name-other.go" file="pkg/file-match.go" time="5.25"/></testsuites>`)
-
-		tests, err := s.ReadTests(strings.NewReader("pkg/file-match.go\n"), times)
-		if err != nil {
-			t.Fatalf("ReadTests failed: %v", err)
-		}
-
-		if len(tests) != 1 {
-			t.Fatalf("Expected 1 test, got %d", len(tests))
-		}
-		if tests[0].Time != 5.25 {
-			t.Errorf("Expected time 5.25, got %.2f", tests[0].Time)
-		}
-		if _, exists := times["pkg/name-other.go"]; !exists {
-			t.Error("Expected name attribute time to be recorded")
-		}
-	})
-
-	t.Run("both attributes where both attributes match", func(t *testing.T) {
-		times := loadTimesFromXML(t, `<testsuites><testsuite name="pkg/both-match.go" file="pkg/both-match.go" time="6.5"/></testsuites>`)
-
-		tests, err := s.ReadTests(strings.NewReader("pkg/both-match.go\n"), times)
-		if err != nil {
-			t.Fatalf("ReadTests failed: %v", err)
-		}
-
-		if len(tests) != 1 {
-			t.Fatalf("Expected 1 test, got %d", len(tests))
-		}
-		if tests[0].Time != 6.5 {
-			t.Errorf("Expected time 6.5, got %.1f", tests[0].Time)
-		}
-		if len(times) != 1 {
-			t.Errorf("Expected single time entry, got %d", len(times))
-		}
-	})
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			runReadTestsMatchCase(t, s, tc)
+		})
+	}
 }
 
 // floatEqual checks if two floats are equal within tolerance.
@@ -374,6 +329,42 @@ func floatEqual(a, b, tolerance float64) bool {
 		diff = -diff
 	}
 	return diff <= tolerance
+}
+
+type readTestsMatchCase struct {
+	name                string
+	xml                 string
+	input               string
+	expectedTime        float64
+	expectedKeysPresent []string
+	expectedTimesLen    int
+}
+
+func runReadTestsMatchCase(t *testing.T, s *splitter.Splitter, tc readTestsMatchCase) {
+	t.Helper()
+
+	times := loadTimesFromXML(t, tc.xml)
+	tests, err := s.ReadTests(strings.NewReader(tc.input), times)
+	if err != nil {
+		t.Fatalf("ReadTests failed: %v", err)
+	}
+
+	if len(tests) != 1 {
+		t.Fatalf("Expected 1 test, got %d", len(tests))
+	}
+	if tests[0].Time != tc.expectedTime {
+		t.Errorf("Expected time %.2f, got %.2f", tc.expectedTime, tests[0].Time)
+	}
+
+	for _, key := range tc.expectedKeysPresent {
+		if _, exists := times[key]; !exists {
+			t.Errorf("Expected time entry for %q", key)
+		}
+	}
+
+	if tc.expectedTimesLen != 0 && len(times) != tc.expectedTimesLen {
+		t.Errorf("Expected %d time entries, got %d", tc.expectedTimesLen, len(times))
+	}
 }
 
 func loadTimesFromXML(t *testing.T, xmlContent string) map[string]float64 {

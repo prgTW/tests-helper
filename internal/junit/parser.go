@@ -84,29 +84,41 @@ func (p *Parser) loadFile(path string, times map[string]float64) error {
 // accumulateTimes recursively accumulates test times from test suites.
 func (p *Parser) accumulateTimes(suites []TestSuite, times map[string]float64, count *int) {
 	for _, suite := range suites {
-		if suite.Time != "" {
-			// Normalize time string (replace comma with dot for some locales)
-			timeStr := strings.ReplaceAll(suite.Time, ",", ".")
-			if val, err := strconv.ParseFloat(timeStr, 64); err == nil {
-				if suite.File != "" {
-					times[suite.File] += val
-					p.logger.Debug().
-						Str("file", suite.File).
-						Float64("time", val).
-						Msg("Accumulated test time")
-					*count++
-				}
-				if suite.Name != "" && suite.Name != suite.File {
-					times[suite.Name] += val
-					p.logger.Debug().
-						Str("name", suite.Name).
-						Float64("time", val).
-						Msg("Accumulated test time")
-					*count++
-				}
+		if val, ok := parseTime(suite.Time); ok {
+			p.addTime(times, suite.File, val, "file", count)
+			if suite.Name != suite.File {
+				p.addTime(times, suite.Name, val, "name", count)
 			}
 		}
 		// Recursively process nested test suites
 		p.accumulateTimes(suite.TestSuites, times, count)
 	}
+}
+
+func parseTime(timeStr string) (float64, bool) {
+	if timeStr == "" {
+		return 0, false
+	}
+
+	// Normalize time string (replace comma with dot for some locales)
+	normalized := strings.ReplaceAll(timeStr, ",", ".")
+	val, err := strconv.ParseFloat(normalized, 64)
+	if err != nil {
+		return 0, false
+	}
+
+	return val, true
+}
+
+func (p *Parser) addTime(times map[string]float64, key string, val float64, field string, count *int) {
+	if key == "" {
+		return
+	}
+
+	times[key] += val
+	p.logger.Debug().
+		Str(field, key).
+		Float64("time", val).
+		Msg("Accumulated test time")
+	*count++
 }
