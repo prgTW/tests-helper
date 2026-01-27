@@ -124,6 +124,18 @@ func TestParser_LoadFiles(t *testing.T) {
 		}
 	})
 
+	t.Run("testsuite without attributes", func(t *testing.T) {
+		pattern := "../../testdata/junit/example2-no-attrs.xml"
+		times, err := parser.LoadFiles([]string{pattern})
+		if err != nil {
+			t.Fatalf("LoadFiles failed: %v", err)
+		}
+
+		if len(times) != 0 {
+			t.Errorf("expected no times for testsuites without attributes, got %d", len(times))
+		}
+	})
+
 	t.Run("no matching files", func(t *testing.T) {
 		pattern := "../../testdata/junit/nonexistent-*.xml"
 		_, err := parser.LoadFiles([]string{pattern})

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite>
+    <testcase name="TestLogin" time="1.1"/>
+  </testsuite>
+  <testsuite>
+    <testcase name="TestConnect" time="5.6"/>
+    <testcase name="TestDisconnect" time="3.2"/>
+  </testsuite>
+</testsuites>
