@@ -45,14 +45,24 @@ func (p *Parser) LoadFiles(patterns []string) (map[string]float64, error) {
 	}
 
 	// Load each file
+	var loadErrs []error
 	for _, file := range files {
 		if err := p.loadFile(file, times); err != nil {
 			p.logger.Warn().
 				Err(err).
 				Str("file", file).
 				Msg("Failed to load file")
-			continue
+			loadErrs = append(loadErrs, err)
 		}
+	}
+
+	if len(loadErrs) > 0 {
+		return times, fmt.Errorf(
+			"failed to load %d/%d JUnit XML files: %w",
+			len(loadErrs),
+			len(files),
+			errors.Join(loadErrs...),
+		)
 	}
 
 	return times, nil

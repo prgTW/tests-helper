@@ -1,0 +1,4 @@
+<testsuites>
+  <testsuite name="broken" time="1.0">
+    <testcase classname="x" name="y" time="1.0"></testcase>
+  <!-- missing closing tags on purpose -->

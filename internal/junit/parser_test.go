@@ -2,7 +2,6 @@ package junit_test
 
 import (
 	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/rs/zerolog"
@@ -145,22 +144,13 @@ func TestParser_LoadFiles(t *testing.T) {
 	})
 
 	t.Run("invalid XML", func(t *testing.T) {
-		// Create a temporary invalid XML file
-		tmpDir := t.TempDir()
-		invalidFile := filepath.Join(tmpDir, "invalid.xml")
-		err := os.WriteFile(invalidFile, []byte("<invalid>not closed"), 0o600)
-		if err != nil {
-			t.Fatalf("Failed to create test file: %v", err)
-		}
-
-		times, err := parser.LoadFiles([]string{invalidFile})
-		// Should not return error, but log warning and continue
-		if err != nil {
-			t.Errorf("LoadFiles returned error for invalid XML: %v", err)
-		}
-		// Should return empty or partial results
-		if len(times) > 0 {
-			t.Logf("Got %d times from invalid file (warnings logged)", len(times))
+		// This fixture is intentionally malformed XML.
+		// Current behavior: parser logs a warning and *does not* return an error.
+		// Desired behavior: invalid XML should fail the command.
+		pattern := "../../testdata/junit/invalid.xml"
+		_, err := parser.LoadFiles([]string{pattern})
+		if err == nil {
+			t.Fatalf("expected error for invalid XML file, got nil")
 		}
 	})
 

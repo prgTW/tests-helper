@@ -96,8 +96,8 @@ func runSplit(logger zerolog.Logger, opts *splitOptions, stdin io.Reader, stdout
 		parser := junit.NewParser(logger)
 		times, err = parser.LoadFiles(opts.statsFiles)
 		if err != nil {
-			logger.Warn().Err(err).Msg("Failed to load stats files, continuing with defaults")
-			times = make(map[string]float64)
+			logger.Warn().Err(err).
+				Msg("Failed to load some or all stats files; parsed timings will be used where available, others will fall back to default times")
 		}
 	} else {
 		logger.Info().Msg("No stats files provided, using default test times")
