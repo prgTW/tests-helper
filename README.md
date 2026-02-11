@@ -1,55 +1,43 @@
 # tests-helper
 
-[![Release](https://github.com/prgTW/tests-helper/actions/workflows/release.yml/badge.svg)](https://github.com/prgTW/tests-helper/actions/workflows/release.yml)
+[![Release](https://github.com/prgtw/tests-helper/actions/workflows/release.yml/badge.svg)](https://github.com/prgtw/tests-helper/actions/workflows/release.yml)
 
-A CLI tool that intelligently distributes test files across parallel workers based on historical execution times from JUnit XML reports. Optimizes parallel test execution in CI/CD environments using a greedy bin-packing algorithm.
+A CLI tool that distributes a list of tests across parallel workers based on historical execution times from JUnit XML reports. It uses a greedy bin‑packing algorithm to keep workers balanced and reduce overall wall time.
 
 ## Features
 
 - **Smart Test Distribution**: Uses historical timing data to balance test execution across workers
 - **JUnit XML Support**: Parses JUnit test reports to extract execution times
 - **CircleCI Integration**: Built-in support for CircleCI environment variables for parallel execution
-- **Flexible Input**: Accepts test lists via stdin and glob patterns for stats files
+- **Flexible Input**: Accepts a newline-separated test list via stdin and glob patterns for stats files
 - **Detailed Statistics**: Provides comprehensive distribution metrics with percentiles
-- **Structured Logging**: Uses zerolog for clean, parseable JSON logs
+- **Structured Logging**: Uses zerolog with a human-readable console writer (logs to stderr)
 
 ## Installation
-
-### Download Pre-built Binaries
-
-Download the latest release for your platform from the [Releases page](https://github.com/prgtw/tests-helper/releases).
-
-**Linux (amd64):**
-```bash
-curl -L https://github.com/prgtw/tests-helper/releases/latest/download/tests-helper_VERSION_Linux_amd64.tar.gz | tar xz
-sudo mv tests-helper /usr/local/bin/
-```
-
-**Linux (arm64):**
-```bash
-curl -L https://github.com/prgtw/tests-helper/releases/latest/download/tests-helper_VERSION_Linux_arm64.tar.gz | tar xz
-sudo mv tests-helper /usr/local/bin/
-```
-
-**macOS (amd64):**
-```bash
-curl -L https://github.com/prgtw/tests-helper/releases/latest/download/tests-helper_VERSION_Darwin_amd64.tar.gz | tar xz
-sudo mv tests-helper /usr/local/bin/
-```
-
-**macOS (arm64/M1/M2):**
-```bash
-curl -L https://github.com/prgtw/tests-helper/releases/latest/download/tests-helper_VERSION_Darwin_arm64.tar.gz | tar xz
-sudo mv tests-helper /usr/local/bin/
-```
-
-**Windows (amd64):**
-Download the `.zip` file from the releases page and extract it to your PATH.
 
 ### Install via Go
 
 ```bash
 go install github.com/prgtw/tests-helper@latest
+```
+
+### Download a Pre-built Binary (GitHub Releases)
+
+Download the asset for your OS/arch from the [Releases page](https://github.com/prgtw/tests-helper/releases).
+
+Release assets are published as **raw binaries** (not `.tar.gz`). Their names follow:
+
+```text
+tests-helper_<version>_<os>_<arch>
+```
+
+Example (macOS arm64):
+
+```bash
+VERSION="v1.2.3" # replace with an actual tag from Releases
+curl -L -o tests-helper "https://github.com/prgtw/tests-helper/releases/download/${VERSION}/tests-helper_${VERSION#v}_darwin_arm64"
+chmod +x tests-helper
+sudo mv tests-helper /usr/local/bin/tests-helper
 ```
 
 ### Build from Source
@@ -63,7 +51,7 @@ go build -o tests-helper
 ## Quick Start
 
 ```bash
-# Basic usage: Split tests across 4 workers, get tests for worker 0
+# Split tests across 4 workers, print the slice for worker 0
 cat test-list.txt | tests-helper split --stats "junit-*.xml" --index 0 --total 4
 ```
 
@@ -75,10 +63,21 @@ cat test-list.txt | tests-helper split --stats "junit-*.xml" --index 0 --total 4
 tests-helper split [flags]
 ```
 
+### Input contract
+
+`tests-helper split` reads **one test identifier per line** from stdin. A “test identifier” is whatever your test runner uses as the unit you want to distribute (commonly **file paths** or **package names**).
+
+Timing data is pulled from JUnit `<testsuite>` elements:
+
+- Prefer matching the suite `file` attribute (e.g. `internal/foo/bar_test.go`)
+- Also matches the suite `name` attribute (useful when your JUnit producer reports suites by package/module)
+
+To get useful balancing, your stdin lines should match whatever your JUnit generator uses for suite `file` or `name`.
+
 ### Flags
 
 | Flag | Description | Default |
-|------|-------------|---------|
+| ---- | ----------- | ------- |
 | `--stats` | Glob pattern(s) for JUnit XML files | - |
 | `--index` | Worker index (0-based) | `$CIRCLE_NODE_INDEX` |
 | `--total` | Total number of workers | `$CIRCLE_NODE_TOTAL` |
@@ -88,31 +87,34 @@ tests-helper split [flags]
 ### Examples
 
 **Basic test splitting:**
+
 ```bash
-# Generate list of tests and split them
-go list ./... | tests-helper split --stats "reports/junit-*.xml" --index 0 --total 4
+cat test-list.txt | tests-helper split --stats "reports/junit-*.xml" --index 0 --total 4
 ```
 
-**With CircleCI (automatic):**
+**With CircleCI (automatic worker selection):**
+
 ```bash
 # Uses CIRCLE_NODE_INDEX and CIRCLE_NODE_TOTAL environment variables
-go list ./... | tests-helper split --stats "previous-run/*.xml"
+cat test-list.txt | tests-helper split --stats "previous-run/*.xml"
 ```
 
 **Enable debug logging:**
+
 ```bash
 cat tests.txt | tests-helper split --stats "*.xml" --debug --index 0 --total 2
 ```
 
 **Without historical data:**
+
 ```bash
-# All tests get default time of 1.0 seconds
+# Tests without historical data get a default time of 1.0 seconds (warn-logged per test)
 cat tests.txt | tests-helper split --index 0 --total 3
 ```
 
 ## How It Works
 
-1. **Read Input**: Reads test file paths from stdin (one per line)
+1. **Read Input**: Reads test identifiers from stdin (one per line)
 2. **Parse Stats**: Parses JUnit XML files to extract historical execution times
 3. **Sort Tests**: Sorts tests by execution time (descending)
 4. **Distribute**: Uses greedy algorithm to assign tests to workers
@@ -124,7 +126,7 @@ cat tests.txt | tests-helper split --index 0 --total 3
 
 The tool uses a **greedy bin-packing algorithm**:
 
-```
+```text
 For each test (sorted by time, descending):
     Assign test to worker with minimum total time
 ```
@@ -134,16 +136,20 @@ This approach ensures near-optimal distribution across workers, minimizing total
 ## Output Format
 
 ### stdout
-Test files assigned to the selected worker (one per line):
-```
+
+Test identifiers assigned to the selected worker (one per line):
+
+```text
 ./pkg/api/handler_test.go
 ./pkg/service/user_test.go
 ./internal/auth/token_test.go
 ```
 
-### stderr (structured logs)
+### stderr (console-formatted structured logs)
+
 Statistics and distribution information:
-```
+
+```text
 7:10PM INF Starting test split index=0 total=4
 7:10PM INF Read tests from input count=120
 7:10PM INF Split tests across workers tests=120 workers=4
@@ -157,6 +163,18 @@ Statistics and distribution information:
 7:10PM INF Split completed successfully
 ```
 
+## Generating JUnit XML (example for Go)
+
+`tests-helper` only reads timing data; it doesn’t generate JUnit reports itself. One common approach for Go is [`gotestsum`](https://github.com/gotestyourself/gotestsum):
+
+```bash
+# 1) Run tests and write a JUnit report (one time or every run)
+gotestsum --junitfile junit.xml -- ./...
+
+# 2) Split the next run using timings from the previous report
+go list ./... | tests-helper split --stats "junit.xml" --index 0 --total 4
+```
+
 ## CircleCI Integration
 
 ### Example Configuration
@@ -167,32 +185,36 @@ version: 2.1
 jobs:
   test:
     docker:
-      - image: cimg/go:1.21
+      - image: cimg/go:1.25
     parallelism: 4
     steps:
       - checkout
-      - restore_cache:
-          keys:
-            - go-mod-v1-{{ checksum "go.sum" }}
 
       # Install tests-helper
       - run:
           name: Install tests-helper
           command: go install github.com/prgtw/tests-helper@latest
 
+      # (Optional) Install gotestsum to produce JUnit XML
+      - run:
+          name: Install gotestsum
+          command: go install gotest.tools/gotestsum@latest
+
       # Run tests with automatic splitting
       - run:
           name: Run tests
           command: |
+            mkdir -p test-results
+
+            # If you have previous JUnit XML available (from a workspace/artifact/cache),
+            # point --stats at those files. Otherwise omit --stats to use default times.
             go list ./... | \
-            tests-helper split --stats "junit-*.xml" | \
-            xargs go test -v -coverprofile=coverage.out
+            tests-helper split --stats "stats/*.xml" | \
+            xargs gotestsum --junitfile "test-results/junit.xml" -- -v
 
       # Store test results for next run
-      - store_artifacts:
-          path: coverage.out
       - store_test_results:
-          path: junit-*.xml
+          path: test-results
 
 workflows:
   test:
@@ -210,6 +232,7 @@ workflows:
 ### Pull Request Checks
 
 Every pull request automatically runs:
+
 - **Tests**: Full test suite with coverage reporting
 - **Linting**: golangci-lint with 50+ linters to ensure code quality
 
@@ -242,7 +265,7 @@ This will create a formal release instead of a snapshot build.
 
 ### Prerequisites
 
-- Go 1.21 or higher
+- Go 1.25.x
 - golangci-lint (for linting)
 - goreleaser (optional, for local release testing)
 
@@ -288,7 +311,7 @@ golangci-lint run --fix
 
 ### Project Structure
 
-```
+```text
 tests-helper/
 ├── main.go                    # Application entry point
 ├── cmd/                       # CLI commands
@@ -305,6 +328,7 @@ tests-helper/
 ## Testing Strategy
 
 Current test coverage:
+
 - `internal/config`: **100.0%**
 - `internal/worker`: **96.6%**
 - `internal/junit`: **91.2%**
@@ -322,13 +346,10 @@ Current test coverage:
 
 **Note**: Pull requests automatically run the full test suite and linting checks via GitHub Actions. Ensure your code passes locally before pushing to save CI time.
 
-## License
-
-[Add your license here]
-
 ## Credits
 
 Built with:
+
 - [cobra](https://github.com/spf13/cobra) - CLI framework
 - [zerolog](https://github.com/rs/zerolog) - Structured logging
 - [env](https://github.com/caarlos0/env) - Environment variable parsing
@@ -336,6 +357,6 @@ Built with:
 ## Support
 
 For issues and questions:
+
 - Open an issue on GitHub
 - Check existing issues for solutions
-- Review the [CLAUDE.md](./CLAUDE.md) for detailed technical documentation
