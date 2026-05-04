@@ -3,7 +3,7 @@ module github.com/prgtw/tests-helper
 go 1.25.5
 
 require (
-	github.com/caarlos0/env/v11 v11.3.1
+	github.com/caarlos0/env/v11 v11.4.1
 	github.com/rs/zerolog v1.34.0
 	github.com/spf13/cobra v1.10.2
 )
