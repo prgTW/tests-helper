@@ -1,0 +1,34 @@
+name: govulncheck
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+  schedule:
+    - cron: '0 6 * * 1'  # Weekly: surfaces newly published vulnerabilities without a code change
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  govulncheck:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          # Minor line must match go.mod; check-latest picks up every patch (security) release
+          go-version: '1.27'
+          check-latest: true
+          cache: true
+
+      # Dependabot does not track the Go toolchain; this flags stdlib and module vulnerabilities
+      - name: Run govulncheck
+        run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...

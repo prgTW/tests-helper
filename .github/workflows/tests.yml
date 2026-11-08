@@ -1,12 +1,15 @@
 name: Tests
 
 on:
+  push:  # Keeps the README badge in sync with master
+    branches:
+      - master
   pull_request:
     branches:
       - master
   workflow_call:  # Allow this workflow to be called by other workflows
   schedule:
-    - cron: '0 6 * * 1'  # Weekly: surfaces newly published vulnerabilities without a code change
+    - cron: '0 6 * * 1'  # Weekly: catches breakage from floating tool versions (golangci-lint latest)
   workflow_dispatch:
 
 permissions:
@@ -57,20 +60,3 @@ jobs:
         with:
           version: latest
           args: --timeout=5m
-
-  govulncheck:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
-
-      - name: Set up Go
-        uses: actions/setup-go@v7
-        with:
-          go-version: '1.27'
-          check-latest: true
-          cache: true
-
-      # Dependabot does not track the Go toolchain; this flags stdlib and module vulnerabilities
-      - name: Run govulncheck
-        run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...

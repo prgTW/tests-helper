@@ -1,6 +1,9 @@
 # tests-helper
 
-[![Release](https://github.com/prgtw/tests-helper/actions/workflows/release.yml/badge.svg)](https://github.com/prgtw/tests-helper/actions/workflows/release.yml)
+[![Tests](https://github.com/prgTW/tests-helper/actions/workflows/tests.yml/badge.svg?branch=master)](https://github.com/prgTW/tests-helper/actions/workflows/tests.yml)
+[![govulncheck](https://github.com/prgTW/tests-helper/actions/workflows/govulncheck.yml/badge.svg?branch=master)](https://github.com/prgTW/tests-helper/actions/workflows/govulncheck.yml)
+[![Release](https://github.com/prgTW/tests-helper/actions/workflows/release.yml/badge.svg?branch=master)](https://github.com/prgTW/tests-helper/actions/workflows/release.yml)
+[![Go version](https://img.shields.io/github/go-mod/go-version/prgTW/tests-helper)](go.mod)
 
 A CLI tool that distributes a list of tests across parallel workers based on historical execution times from JUnit XML reports. It uses a greedy bin‑packing algorithm to keep workers balanced and reduce overall wall time.
 
@@ -235,6 +238,7 @@ Every pull request automatically runs:
 
 - **Tests**: Full test suite with coverage reporting
 - **Linting**: golangci-lint with 50+ linters to ensure code quality
+- **Vulnerabilities**: govulncheck on the Go standard library and modules (also weekly on `master`)
 
 The Tests workflow (`.github/workflows/tests.yml`) runs on all PRs to ensure code quality before merging.
 
@@ -260,79 +264,6 @@ git push origin v1.0.0
 ```
 
 This will create a formal release instead of a snapshot build.
-
-## Development
-
-### Prerequisites
-
-- Go 1.27.x
-- golangci-lint (for linting)
-- goreleaser (optional, for local release testing)
-
-### Building
-
-```bash
-go build -o tests-helper
-```
-
-### Testing GoReleaser Locally
-
-```bash
-# Test the release process without publishing
-goreleaser release --snapshot --clean
-
-# Check what would be released
-goreleaser check
-```
-
-### Testing
-
-```bash
-# Run all tests
-go test ./...
-
-# Run with coverage
-go test ./... -cover
-
-# Generate coverage report
-go test ./... -coverprofile=coverage.out
-go tool cover -html=coverage.out
-```
-
-### Linting
-
-```bash
-# Run linter
-golangci-lint run
-
-# Run with auto-fix
-golangci-lint run --fix
-```
-
-### Project Structure
-
-```text
-tests-helper/
-├── main.go                    # Application entry point
-├── cmd/                       # CLI commands
-│   ├── root.go               # Root command
-│   └── split.go              # Split subcommand
-├── internal/                 # Private application code
-│   ├── config/               # Configuration management
-│   ├── junit/                # JUnit XML parsing
-│   ├── splitter/             # Test splitting logic
-│   └── worker/               # Worker allocation
-└── testdata/                 # Test fixtures
-```
-
-## Testing Strategy
-
-Current test coverage:
-
-- `internal/config`: **100.0%**
-- `internal/worker`: **96.6%**
-- `internal/junit`: **91.2%**
-- `internal/splitter`: **88.0%**
 
 ## Contributing
 
