@@ -6,3 +6,19 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    # Indirect modules (e.g. golang.org/x/sys) get version updates too, not only security ones
+    allow:
+      - dependency-type: "all"
+    groups:
+      go-dependencies:
+        applies-to: version-updates
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      github-actions:
+        applies-to: version-updates
+        update-types: ["minor", "patch"]

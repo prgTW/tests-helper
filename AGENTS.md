@@ -10,7 +10,7 @@ This document provides context for AI agents working with the tests-helper codeb
 
 ### Technology Stack
 
-- **Language**: Go 1.25.x
+- **Language**: Go 1.27.x
 - **CLI Framework**: spf13/cobra (command-line interface)
 - **Logging**: rs/zerolog (console writer to stderr)
 - **Configuration**: caarlos0/env v11 (environment variable parsing)
