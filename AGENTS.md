@@ -294,10 +294,15 @@ The project uses GitHub Actions for automated testing and releases:
 
 **Tests Workflow** (`.github/workflows/tests.yml`):
 
-- Triggers on pull requests to master and can be reused via `workflow_call`
+- Triggers on pushes and pull requests to master, weekly, and via `workflow_call`
 - Runs two jobs:
   - **test**: Executes tests, generates coverage report, prints coverage summary
   - **lint**: Runs golangci-lint via GitHub Action
+
+**govulncheck Workflow** (`.github/workflows/govulncheck.yml`):
+
+- Triggers on pushes and pull requests to master and weekly
+- Fails when code reaches a known vulnerability in the Go standard library or a module
 
 **Release Workflow** (`.github/workflows/release.yml`):
 
