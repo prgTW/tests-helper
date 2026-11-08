@@ -185,7 +185,7 @@ version: 2.1
 jobs:
   test:
     docker:
-      - image: cimg/go:1.25
+      - image: cimg/go:1.27
     parallelism: 4
     steps:
       - checkout
@@ -265,7 +265,7 @@ This will create a formal release instead of a snapshot build.
 
 ### Prerequisites
 
-- Go 1.25.x
+- Go 1.27.x
 - golangci-lint (for linting)
 - goreleaser (optional, for local release testing)
 

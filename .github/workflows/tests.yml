@@ -5,6 +5,9 @@ on:
     branches:
       - master
   workflow_call:  # Allow this workflow to be called by other workflows
+  schedule:
+    - cron: '0 6 * * 1'  # Weekly: surfaces newly published vulnerabilities without a code change
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -19,7 +22,9 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
-          go-version: '1.25'
+          # Minor line must match go.mod; check-latest picks up every patch (security) release
+          go-version: '1.27'
+          check-latest: true
           cache: true
 
       - name: Run tests
@@ -37,12 +42,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
-          go-version: '1.25'
+          # Minor line must match go.mod; check-latest picks up every patch (security) release
+          go-version: '1.27'
+          check-latest: true
           cache: true
 
       - name: Run golangci-lint
@@ -50,3 +57,20 @@ jobs:
         with:
           version: latest
           args: --timeout=5m
+
+  govulncheck:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.27'
+          check-latest: true
+          cache: true
+
+      # Dependabot does not track the Go toolchain; this flags stdlib and module vulnerabilities
+      - name: Run govulncheck
+        run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
