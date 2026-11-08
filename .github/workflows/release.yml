@@ -26,7 +26,7 @@ jobs:
           fetch-tags: true
 
       - name: Set up Go
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
           # Minor line must match go.mod; check-latest picks up every patch (security) release
           go-version: '1.27'
