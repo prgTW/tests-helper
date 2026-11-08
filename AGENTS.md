@@ -32,6 +32,12 @@
 - Log values as structured zerolog fields, not only in the message text.
 - Test fixtures go in `testdata/` (`junit/*.xml`, `testlists/*.txt`).
 
+## Versioning and Commits
+
+- Releases follow [Semantic Versioning](https://semver.org/): tag `vMAJOR.MINOR.PATCH` on `master`; GoReleaser builds and publishes the release.
+- Commit messages and PR titles follow [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `perf:`, `refactor:`, `docs:`, `test:`, `ci:`, `chore:`). The release changelog is grouped by these prefixes, and `docs:`, `test:` and `chore:` are left out of it.
+- Breaking changes use `!` (e.g. `feat!:`) and require a major version bump.
+
 ## Before Committing
 
 ```bash

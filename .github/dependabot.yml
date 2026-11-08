@@ -6,6 +6,9 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    commit-message:
+      prefix: "fix"
+      include: "scope"
     # Indirect modules (e.g. golang.org/x/sys) get version updates too, not only security ones
     allow:
       - dependency-type: "all"
@@ -18,6 +21,8 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    commit-message:
+      prefix: "ci"
     groups:
       github-actions:
         applies-to: version-updates
