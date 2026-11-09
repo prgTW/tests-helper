@@ -9,7 +9,7 @@ on:
       - master
   workflow_call:  # Allow this workflow to be called by other workflows
   schedule:
-    - cron: '0 6 * * 1'  # Weekly: catches breakage from floating tool versions (golangci-lint latest)
+    - cron: '0 6 * * 1'  # Weekly: catches breakage from the floating Go patch version (check-latest)
   workflow_dispatch:
 
 permissions:
@@ -58,5 +58,7 @@ jobs:
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v9
         with:
-          version: latest
+          # Pinned: unpinned, the action resolves the newest golangci-lint, so an upstream
+          # release turns every open PR red without a code change. Bump deliberately.
+          version: v2.15.0
           args: --timeout=5m

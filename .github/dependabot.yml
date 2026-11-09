@@ -6,6 +6,10 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    # A version has to be public for two days before Dependabot proposes it; a hijacked release is usually caught by then.
+    # Cooldown applies to version updates only, so security fixes still arrive immediately.
+    cooldown:
+      default-days: 2
     commit-message:
       prefix: "fix"
       include: "scope"
@@ -21,6 +25,10 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    # A version has to be public for two days before Dependabot proposes it; a hijacked release is usually caught by then.
+    # Cooldown applies to version updates only, so security fixes still arrive immediately.
+    cooldown:
+      default-days: 2
     commit-message:
       prefix: "ci"
     groups:
