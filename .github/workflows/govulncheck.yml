@@ -29,6 +29,7 @@ jobs:
           check-latest: true
           cache: true
 
-      # Dependabot does not track the Go toolchain; this flags stdlib and module vulnerabilities
+      # Dependabot does not track the Go toolchain; this flags stdlib and module vulnerabilities.
+      # govulncheck itself is a `tool` in go.mod, so its version is checksummed and bumped by Dependabot.
       - name: Run govulncheck
-        run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+        run: go tool govulncheck ./...
